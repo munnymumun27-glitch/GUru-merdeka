@@ -378,7 +378,7 @@ Pastikan output sesuai dengan FORMAT OUTPUT WAJIB yang terdiri dari Kisi-kisi, S
 
     try {
       const response = await ai.models.generateContentStream({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-2.5-flash",
         contents: userPrompt,
         config: {
           systemInstruction: SYSTEM_PROMPT,
@@ -414,9 +414,14 @@ Pastikan output sesuai dengan FORMAT OUTPUT WAJIB yang terdiri dari Kisi-kisi, S
         }
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating content:", error);
-      setResult("Terjadi kesalahan saat menghasilkan soal. Pastikan API key sudah benar dan coba lagi.");
+      const errorMessage = error?.message || error?.toString() || "";
+      if (errorMessage.includes("429") || errorMessage.includes("Quota exceeded") || errorMessage.includes("RESOURCE_EXHAUSTED")) {
+        setResult("Terjadi kesalahan: Kuota API Gemini Anda telah habis (429 Resource Exhausted). Silakan cek billing atau tunggu beberapa saat sebelum mencoba lagi.");
+      } else {
+        setResult("Terjadi kesalahan saat menghasilkan soal. Pastikan koneksi internet stabil dan coba lagi.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -955,7 +960,7 @@ Pastikan output sesuai dengan FORMAT OUTPUT WAJIB yang terdiri dari Kisi-kisi, S
             <span className="text-[11px] text-stone-500 font-medium tracking-wide">AI Engine Online</span>
           </div>
           <div className="h-3 w-px bg-stone-200"></div>
-          <span className="text-[11px] text-stone-400 font-medium">Model: Gemini 3.1 Pro</span>
+          <span className="text-[11px] text-stone-400 font-medium">Model: Gemini 2.5 Flash</span>
         </div>
       </footer>
       
