@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+
+    function isValidQuizHistory(data) {
+      return data.keys().hasAll(['userId', 'kelas', 'semester', 'materi', 'jumlah', 'jenisSoal', 'level', 'kurikulum', 'content', 'createdAt'])
+        && data.keys().size() == 10
+        && data.userId is string && data.userId.size() <= 128
+        && data.userId == request.auth.uid
+        && data.kelas is string && data.kelas.size() <= 50
+        && data.semester is string && data.semester.size() <= 50
+        && data.materi is string && data.materi.size() <= 500
+        && data.jumlah is number && data.jumlah > 0 && data.jumlah <= 100
+        && data.jenisSoal is string && data.jenisSoal.size() <= 100
+        && data.level is string && data.level.size() <= 100
+        && data.kurikulum is string && data.kurikulum.size() <= 100
+        && data.content is string && data.content.size() <= 500000
+        && data.createdAt == request.time;
+    }
+
+    match /users/{userId}/quizHistory/{historyId} {
+      allow get: if isSignedIn() && isValidId(userId) && isValidId(historyId) && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && isValidId(userId) && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(userId) && isValidId(historyId) && userId == request.auth.uid && isValidQuizHistory(incoming());
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
