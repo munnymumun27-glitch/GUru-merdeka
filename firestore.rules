@@ -34,7 +34,7 @@ service cloud.firestore {
 
       allow create: if isSignedIn() && isValidId(userId) && isValidId(historyId) && userId == request.auth.uid && isValidQuizHistory(incoming());
       allow update: if false;
-      allow delete: if false;
+      allow delete: if isSignedIn() && isValidId(userId) && isValidId(historyId) && existing().userId == request.auth.uid;
     }
   }
 }
